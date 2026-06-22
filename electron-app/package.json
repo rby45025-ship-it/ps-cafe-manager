@@ -1,0 +1,82 @@
+{
+  "name": "ps-cafe-manager",
+  "version": "1.0.0",
+  "description": "PlayStation Cafe Manager - Arabic RTL Desktop App",
+  "main": "electron.js",
+  "author": "PS Cafe",
+  "scripts": {
+    "dev": "concurrently \"node server.js\" \"vite\"",
+    "build": "vite build",
+    "build:exe": "vite build && electron-builder",
+    "start": "electron .",
+    "pack": "electron-builder --dir"
+  },
+  "dependencies": {
+    "better-sqlite3": "^9.6.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@tanstack/react-query": "^5.80.7",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.3",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.5.2",
+    "autoprefixer": "^10.4.21",
+    "concurrently": "^9.1.2",
+    "electron": "^36.4.0",
+    "electron-builder": "^25.1.8",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "recharts": "^2.15.3",
+    "tailwindcss": "^4.1.10",
+    "tw-animate-css": "^1.3.4",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "wouter": "^3.7.1"
+  },
+  "build": {
+    "appId": "com.pscafe.manager",
+    "productName": "PlayStation Cafe Manager",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "extraResources": [
+      {
+        "from": "server.js",
+        "to": "server.js"
+      },
+      {
+        "from": "public/alarm.mp3",
+        "to": "alarm.mp3"
+      }
+    ],
+    "files": [
+      "electron.js",
+      "dist/**"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "public/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerLanguages": ["ar"],
+      "language": "1025"
+    },
+    "linux": {
+      "target": "AppImage"
+    },
+    "mac": {
+      "target": "dmg"
+    }
+  }
+}

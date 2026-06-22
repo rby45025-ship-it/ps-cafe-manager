@@ -1,0 +1,423 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: PlayStation Cafe Management API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: devices
+    description: Device management
+  - name: sessions
+    description: Session management
+  - name: revenue
+    description: Revenue tracking
+  - name: settings
+    description: Application settings
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /devices:
+    get:
+      operationId: getDevices
+      tags: [devices]
+      summary: Get all devices with current session state
+      responses:
+        "200":
+          description: List of devices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Device"
+
+  /devices/{id}:
+    patch:
+      operationId: updateDevice
+      tags: [devices]
+      summary: Update device name or hourly rate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeviceInput"
+      responses:
+        "200":
+          description: Updated device
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Device"
+
+  /sessions:
+    post:
+      operationId: startSession
+      tags: [sessions]
+      summary: Start a new session for a device
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionInput"
+      responses:
+        "201":
+          description: Created session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+
+  /sessions/{id}/end:
+    post:
+      operationId: endSession
+      tags: [sessions]
+      summary: End an active session
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Ended session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+
+  /sessions/{id}/addtime:
+    post:
+      operationId: addTime
+      tags: [sessions]
+      summary: Add time to an active session
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddTimeInput"
+      responses:
+        "200":
+          description: Updated session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+
+  /alarm/{deviceId}:
+    post:
+      operationId: setAlarm
+      tags: [sessions]
+      summary: Set alarm state for a device
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AlarmInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlarmState"
+
+  /revenue/today:
+    get:
+      operationId: getTodayRevenue
+      tags: [revenue]
+      summary: Get today's revenue summary
+      responses:
+        "200":
+          description: Today's revenue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TodayRevenue"
+
+  /revenue/monthly:
+    get:
+      operationId: getMonthlyRevenue
+      tags: [revenue]
+      summary: Get monthly revenue breakdown
+      responses:
+        "200":
+          description: Monthly revenue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonthlyRevenue"
+
+  /stats:
+    get:
+      operationId: getStats
+      tags: [revenue]
+      summary: Get overall statistics
+      responses:
+        "200":
+          description: Statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stats"
+
+  /sessions/history:
+    get:
+      operationId: getSessionHistory
+      tags: [sessions]
+      summary: Get session history
+      responses:
+        "200":
+          description: Session history list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SessionHistory"
+
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      summary: Get application settings
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppSettings"
+    patch:
+      operationId: updateSettings
+      tags: [settings]
+      summary: Update application settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsInput"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppSettings"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    Device:
+      type: object
+      required: [id, name, hourlyRate, status]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        hourlyRate:
+          type: number
+        status:
+          type: string
+          enum: [available, in_use, expired]
+        activeSession:
+          $ref: "#/components/schemas/Session"
+          nullable: true
+        alarmActive:
+          type: boolean
+
+    DeviceInput:
+      type: object
+      properties:
+        name:
+          type: string
+        hourlyRate:
+          type: number
+
+    Session:
+      type: object
+      required: [id, deviceId, startTime, durationMinutes, status]
+      properties:
+        id:
+          type: integer
+        deviceId:
+          type: integer
+        startTime:
+          type: string
+        endTime:
+          type: ["string", "null"]
+        durationMinutes:
+          type: integer
+        remainingSeconds:
+          type: ["integer", "null"]
+        cost:
+          type: ["number", "null"]
+        status:
+          type: string
+          enum: [active, ended, expired]
+
+    SessionInput:
+      type: object
+      required: [deviceId, durationMinutes]
+      properties:
+        deviceId:
+          type: integer
+        durationMinutes:
+          type: integer
+
+    AddTimeInput:
+      type: object
+      required: [minutes]
+      properties:
+        minutes:
+          type: integer
+
+    AlarmInput:
+      type: object
+      required: [active]
+      properties:
+        active:
+          type: boolean
+
+    AlarmState:
+      type: object
+      required: [deviceId, active]
+      properties:
+        deviceId:
+          type: integer
+        active:
+          type: boolean
+
+    TodayRevenue:
+      type: object
+      required: [totalRevenue, totalSessions, totalMinutes]
+      properties:
+        totalRevenue:
+          type: number
+        totalSessions:
+          type: integer
+        totalMinutes:
+          type: integer
+
+    MonthlyRevenue:
+      type: object
+      required: [totalRevenue, dailyBreakdown, mostProfitableDay, averageDaily]
+      properties:
+        totalRevenue:
+          type: number
+        dailyBreakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/DailyRevenue"
+        mostProfitableDay:
+          type: ["string", "null"]
+        averageDaily:
+          type: number
+
+    DailyRevenue:
+      type: object
+      required: [date, revenue, sessions]
+      properties:
+        date:
+          type: string
+        revenue:
+          type: number
+        sessions:
+          type: integer
+
+    Stats:
+      type: object
+      required: [totalSessions, totalMinutes, mostUsedDevice, activeDevices, availableDevices]
+      properties:
+        totalSessions:
+          type: integer
+        totalMinutes:
+          type: integer
+        mostUsedDevice:
+          type: ["string", "null"]
+        activeDevices:
+          type: integer
+        availableDevices:
+          type: integer
+
+    SessionHistory:
+      type: object
+      required: [id, deviceId, deviceName, startTime, durationMinutes, cost, status]
+      properties:
+        id:
+          type: integer
+        deviceId:
+          type: integer
+        deviceName:
+          type: string
+        startTime:
+          type: string
+        endTime:
+          type: ["string", "null"]
+        durationMinutes:
+          type: integer
+        cost:
+          type: ["number", "null"]
+        status:
+          type: string
+
+    AppSettings:
+      type: object
+      required: [id, startWithWindows]
+      properties:
+        id:
+          type: integer
+        startWithWindows:
+          type: boolean
+
+    SettingsInput:
+      type: object
+      properties:
+        startWithWindows:
+          type: boolean
